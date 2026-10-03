@@ -1,0 +1,29 @@
+{
+  "name": "hyrule-launcher",
+  "productName": "Hyrule Launcher",
+  "version": "1.0.0",
+  "description": "Launcher no estilo Steam para jogar Zelda: Breath of the Wild no Cemu — 100% visual, não altera o emulador.",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "node tools/build.js",
+    "release": "node tools/build.js --zip",
+    "icon": "electron tools/make-icon.js",
+    "banner": "node tools/make-banner.js"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.5.1"
+  },
+  "author": "Lucas Miranda",
+  "license": "MIT",
+  "keywords": [
+    "cemu",
+    "wii-u",
+    "zelda",
+    "breath-of-the-wild",
+    "launcher",
+    "electron"
+  ]
+}
