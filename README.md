@@ -233,7 +233,7 @@ dele, em `%APPDATA%\Hyrule Launcher`. O código está todo aberto aqui.
 Precisa do [Node.js](https://nodejs.org) 20 ou mais recente.
 
 ```bash
-git clone https://github.com/<seu-usuario>/hyrule-launcher.git
+git clone https://github.com/lucasmrd/hyrule-launcher.git
 cd hyrule-launcher
 npm install
 npm start           # roda em modo de desenvolvimento
