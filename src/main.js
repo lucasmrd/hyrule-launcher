@@ -44,6 +44,20 @@ const versions = new Map();
 function loadSetup() {
   const s = readJson('setup.json');
   setup = s && fs.existsSync(s.cemuExe) && cemu.asGame(s.gameDir) ? s : null;
+  return s;
+}
+// Logo depois de ligar o PC o disco do jogo pode demorar a responder: espera até 15 s
+// antes de concluir que os caminhos salvos sumiram (e mostrar a configuração de novo).
+let setupReady = null;
+function waitForSetup() {
+  if (!setupReady) setupReady = (async () => {
+    for (let i = 0; i < 15; i++) {
+      const saved = loadSetup();
+      if (setup || !saved) return;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  })();
+  return setupReady;
 }
 const install = () => cemu.resolveInstall(setup.cemuExe);
 const game = () => cemu.asGame(setup.gameDir);
@@ -75,6 +89,7 @@ function artUrls() {
 }
 
 async function gameInfo() {
+  await waitForSetup();
   if (!setup) return { needsSetup: true, running: cemuRunning };
   const inst = install(), g = game(), meta = cemu.readMetaXml(g.dir);
   const art = artUrls();
@@ -112,8 +127,9 @@ async function poll() {
     cemuRunning = now;
     send('cemu:state', { running: now });
     if (now && launchedByUs && win && !win.isDestroyed()) {
-      // dá tempo do Cemu abrir a janela dele antes de sair da frente
-      setTimeout(() => win.minimize(), 1200);
+      // só sai da frente quando a janela do Cemu existir, e entrega o foco a ela
+      // (sem foco o Cemu não recebe teclado nem controle)
+      focusCemuWhenReady();
     }
     if (!now) {
       // o Cemu grava o tempo de jogo ao fechar; relê em seguida
@@ -126,6 +142,18 @@ async function poll() {
     }
   }
   setTimeout(poll, POLL_MS);
+}
+
+function focusCemuWhenReady(tries = 0) {
+  const name = path.basename(setup?.cemuExe || 'Cemu.exe', '.exe').replace(/'/g, "''");
+  execFile('powershell', ['-NoProfile', '-Command',
+    `$p = Get-Process -Name '${name}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1; ` +
+    `if ($p) { (New-Object -ComObject WScript.Shell).AppActivate($p.Id) | Out-Null; 'ok' }`],
+  { windowsHide: true }, (_err, stdout) => {
+    const ready = String(stdout).includes('ok');
+    if (!ready && tries < 60) return setTimeout(() => focusCemuWhenReady(tries + 1), 500);
+    if (win && !win.isDestroyed() && cemuRunning) setTimeout(() => win.minimize(), ready ? 400 : 0);
+  });
 }
 
 function send(ch, data) {
@@ -244,7 +272,7 @@ app.on('second-instance', () => {
 
 app.whenReady().then(async () => {
   mergePrefs(readJson('prefs.json'));
-  loadSetup();
+  waitForSetup(); // a abertura animada já aparece enquanto isso
   cemuRunning = await isCemuRunning();
   createWindow();
   setTimeout(poll, POLL_MS);
