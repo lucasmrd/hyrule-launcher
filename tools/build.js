@@ -6,12 +6,15 @@ const path = require('path');
 const pkg = require('../package.json');
 
 const root = path.join(__dirname, '..');
+// --out=<pasta> permite empacotar sem sobrescrever um launcher que está aberto em dist/
+const outArg = process.argv.find((a) => a.startsWith('--out='));
+const outDir = path.join(root, outArg ? outArg.slice(6) : 'dist');
 const KEEP_LOCALES = ['en-US.pak', 'pt-BR.pak'];
 
 (async () => {
   const [out] = await packager({
     dir: root,
-    out: path.join(root, 'dist'),
+    out: outDir,
     name: 'Hyrule Launcher',
     executableName: 'Hyrule Launcher',
     platform: 'win32',
@@ -21,7 +24,7 @@ const KEEP_LOCALES = ['en-US.pak', 'pt-BR.pak'];
     overwrite: true,
     asar: true,
     prune: true,
-    ignore: [/^\/tools/, /^\/dist/, /^\/docs/, /^\/\.git/, /^\/README\.md/, /^\/node_modules\/\.cache/],
+    ignore: [/^\/tools/, /^\/dist/, /^\/release/, /^\/docs/, /^\/\.git/, /^\/README\.md/, /^\/node_modules\/\.cache/],
     win32metadata: { CompanyName: 'Hyrule Launcher', FileDescription: 'Hyrule Launcher', ProductName: 'Hyrule Launcher' },
   });
 
@@ -31,7 +34,7 @@ const KEEP_LOCALES = ['en-US.pak', 'pt-BR.pak'];
   console.log('OK:', out);
 
   if (process.argv.includes('--zip')) {
-    const zip = path.join(root, 'dist', `Hyrule-Launcher-v${pkg.version}-win64.zip`);
+    const zip = path.join(outDir, `Hyrule-Launcher-v${pkg.version}-win64.zip`);
     if (fs.existsSync(zip)) fs.unlinkSync(zip);
     const tar = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe');
     // dentro do zip a pasta se chama só "Hyrule Launcher"

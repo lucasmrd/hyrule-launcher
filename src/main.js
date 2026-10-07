@@ -18,7 +18,10 @@ let cemuRunning = false;
 let launchedByUs = false;
 
 const dataFile = (name) => path.join(app.getPath('userData'), name);
-const readJson = (name) => { try { return JSON.parse(fs.readFileSync(dataFile(name), 'utf8')); } catch { return null; } };
+const readJson = (name) => {
+  try { return JSON.parse(fs.readFileSync(dataFile(name), 'utf8').replace(/^﻿/, '')); }
+  catch (e) { if (e.code !== 'ENOENT') log(`erro lendo ${name}:`, e.code || '', e.message); return null; }
+};
 const writeJson = (name, obj) => { fs.mkdirSync(app.getPath('userData'), { recursive: true }); fs.writeFileSync(dataFile(name), JSON.stringify(obj, null, 2)); };
 
 /* ================= Preferências visuais (tema, música, volume) ================= */
