@@ -337,8 +337,16 @@ lib.addEventListener('scroll', () => {
 const menu = $('#menu'), menuBtn = $('#menu-btn');
 menuBtn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('open'); menuBtn.classList.toggle('open'); });
 document.addEventListener('click', () => { menu.classList.remove('open'); menuBtn.classList.remove('open'); });
+const fsToggle = $('#fs-toggle');
+fsToggle.classList.toggle('on', !!hyrule.prefs.fullscreen);
 menu.addEventListener('click', (e) => {
-  const act = e.target.dataset.act;
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'fullscreen') {
+    const on = !fsToggle.classList.contains('on');
+    fsToggle.classList.toggle('on', on);
+    hyrule.setPrefs({ fullscreen: on });
+    toast(on ? 'O jogo vai abrir sempre em tela cheia' : 'O jogo vai seguir a configuração de tela do Cemu');
+  }
   if (act === 'cemu') { if (state === 'running') toast('O Cemu já está aberto'); else hyrule.openCemu(); }
   if (act === 'game') hyrule.openPath('game');
   if (act === 'emu') hyrule.openPath('cemu');

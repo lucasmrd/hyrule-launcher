@@ -515,3 +515,11 @@ body.idle .eq i { animation-play-state: paused; }
 .setup-cancel { margin-top: 10px; font-size: 12.5px; color: var(--dim); transition: color .2s; }
 .setup-cancel:hover { color: var(--text); }
 .setup-cancel[hidden] { display: none; }
+
+/* opção marcável no menu ⋯ */
+.menu { min-width: 250px; }
+.menu .menu-check { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.mc-box { position: relative; width: 16px; height: 16px; flex: none; border-radius: 4px; border: 1.5px solid var(--line-2); transition: background .2s, border-color .2s; }
+.menu-check.on .mc-box { background: var(--gold-hi); border-color: var(--gold-hi); }
+.mc-box::after { content: ''; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0); transition: transform .25s var(--ease); }
+.menu-check.on .mc-box::after { transform: rotate(45deg) scale(1); }

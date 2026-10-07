@@ -23,12 +23,13 @@ const writeJson = (name, obj) => { fs.mkdirSync(app.getPath('userData'), { recur
 
 /* ================= Preferências visuais (tema, música, volume) ================= */
 const THEMES = { dark: { bg: '#07090c', symbol: '#d8c79a' }, light: { bg: '#f3efe6', symbol: '#5a4a24' } };
-let prefs = { theme: 'dark', music: false, volume: 0.7 };
+let prefs = { theme: 'dark', music: false, volume: 0.7, fullscreen: false };
 function mergePrefs(p) {
   if (!p) return;
   if (p.theme in THEMES) prefs.theme = p.theme;
   if (typeof p.music === 'boolean') prefs.music = p.music;
   if (typeof p.volume === 'number') prefs.volume = Math.max(0, Math.min(1, p.volume));
+  if (typeof p.fullscreen === 'boolean') prefs.fullscreen = p.fullscreen;
 }
 function applyWindowTheme() {
   if (!win || win.isDestroyed()) return;
@@ -152,14 +153,23 @@ async function poll() {
   setTimeout(poll, POLL_MS);
 }
 
-function focusCemuWhenReady(tries = 0) {
+// Passa o foco para a janela do Cemu SÓ com SetForegroundWindow: não mexe em tamanho,
+// posição nem tela cheia (o AppActivate do WScript podia tirar o jogo da tela cheia).
+function focusCemuScript(waitMs) {
   const name = path.basename(setup?.cemuExe || 'Cemu.exe', '.exe').replace(/'/g, "''");
-  execFile('powershell', ['-NoProfile', '-Command',
-    `$p = Get-Process -Name '${name}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1; ` +
-    `if ($p) { (New-Object -ComObject WScript.Shell).AppActivate($p.Id) | Out-Null; 'ok' }`],
-  { windowsHide: true }, (_err, stdout) => {
+  return [
+    `Add-Type -Namespace HL -Name W -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();'`,
+    `$end = (Get-Date).AddMilliseconds(${waitMs})`,
+    `do {`,
+    `  $p = Get-Process -Name '${name}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1`,
+    `  if ($p) { if ([HL.W]::GetForegroundWindow() -ne $p.MainWindowHandle) { [void][HL.W]::SetForegroundWindow($p.MainWindowHandle) }; 'ok'; break }`,
+    `  Start-Sleep -Milliseconds 250`,
+    `} while ((Get-Date) -lt $end)`,
+  ].join('\n');
+}
+function focusCemuWhenReady() {
+  execFile('powershell', ['-NoProfile', '-Command', focusCemuScript(30000)], { windowsHide: true }, (_err, stdout) => {
     const ready = String(stdout).includes('ok');
-    if (!ready && tries < 60) return setTimeout(() => focusCemuWhenReady(tries + 1), 500);
     if (win && !win.isDestroyed() && cemuRunning) setTimeout(() => win.minimize(), ready ? 400 : 0);
   });
 }
@@ -247,18 +257,17 @@ ipcMain.handle('game:launch', async () => {
   if (cemuRunning) return { ok: true, already: true };
   if (!setup || !fs.existsSync(setup.cemuExe)) return { ok: false, error: 'Cemu.exe não encontrado' };
   launchedByUs = true;
-  const child = spawn(setup.cemuExe, ['-g', game().rpx], { cwd: path.dirname(setup.cemuExe), detached: true, stdio: 'ignore' });
+  // -f = "Launch games in fullscreen mode" (parâmetro oficial do Cemu; não altera a configuração dele)
+  const args = ['-g', game().rpx, ...(prefs.fullscreen ? ['-f'] : [])];
+  const child = spawn(setup.cemuExe, args, { cwd: path.dirname(setup.cemuExe), detached: true, stdio: 'ignore' });
   child.on('error', () => { launchedByUs = false; send('cemu:error', 'Falha ao iniciar o Cemu'); });
   child.unref();
   return { ok: true };
 });
 
 ipcMain.handle('cemu:focus', () => {
-  // traz a janela do Cemu para frente (só ativa a janela, nada mais)
-  const name = path.basename(setup?.cemuExe || 'Cemu.exe', '.exe').replace(/'/g, "''");
-  execFile('powershell', ['-NoProfile', '-Command',
-    `$p = Get-Process -Name '${name}' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($p) { (New-Object -ComObject WScript.Shell).AppActivate($p.Id) | Out-Null }`],
-  { windowsHide: true });
+  // traz a janela do Cemu para frente (só o foco, nada mais)
+  execFile('powershell', ['-NoProfile', '-Command', focusCemuScript(0)], { windowsHide: true });
 });
 
 ipcMain.handle('open:path', (_e, which) => {
