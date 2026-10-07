@@ -142,7 +142,7 @@ Clique em **JOGAR**. Para ter o launcher sempre à mão, clique com o botão dir
 | ▶️ **JOGAR** | Abre o jogo no Cemu. Se o Cemu já estiver aberto, o botão fica azul (**EM EXECUÇÃO**) e leva você até ele. |
 | 🎧 **Fone** (barra superior) | **Clique**: liga ou desliga a música. **Passe o mouse**: abre o volume. **Rodinha do mouse**: ajusta o volume. |
 | ☀️ / 🌙 **Sol / Lua** | Troca entre o tema escuro e o tema claro. |
-| ⋯ **Mais opções** | Abrir o Cemu sem jogo, abrir as pastas do jogo, do Cemu e das capturas, ou **reconfigurar os caminhos**. |
+| ⋯ **Mais opções** | **Sempre abrir em tela cheia**, abrir o Cemu sem jogo, abrir as pastas do jogo, do Cemu e das capturas, ou **reconfigurar os caminhos**. |
 | 📸 **Capturas** | Clique numa imagem para ver em tela cheia. Use ← → para navegar e **Esc** para sair. |
 
 ## 🔮 Como funciona
@@ -208,6 +208,15 @@ enquanto o jogo está aberto ou com o launcher minimizado.
 
 Abra **⋯ → Reconfigurar caminhos…** e aponte de novo. Se os caminhos salvos deixarem de existir, a tela de
 configuração aparece sozinha.
+</details>
+
+<details>
+<summary><b>🎮 Meu controle de PlayStation não funciona no jogo</b></summary>
+<br>
+
+O Cemu 1.x normalmente lê controles de **Xbox (XInput)**. Se você usa DualSense ou DualShock pela Steam, adicione o
+`Hyrule Launcher.exe` na Steam (**Adicionar um jogo → Adicionar um jogo não-Steam**) e abra o launcher por lá. A
+Steam reconhece o Cemu aberto pelo launcher e traduz o controle normalmente.
 </details>
 
 <details>
