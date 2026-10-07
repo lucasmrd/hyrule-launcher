@@ -41,9 +41,16 @@ function applyWindowTheme() {
 // setup.json: { cemuExe, gameDir } — escolhido na primeira abertura
 let setup = null;
 const versions = new Map();
+// diagnóstico em %APPDATA%\Hyrule Launcher\launcher.log
+function log(...args) {
+  try { fs.appendFileSync(dataFile('launcher.log'), `[${new Date().toISOString()}] ${args.join(' ')}\n`); } catch { /* sem log */ }
+}
 function loadSetup() {
   const s = readJson('setup.json');
   setup = s && fs.existsSync(s.cemuExe) && cemu.asGame(s.gameDir) ? s : null;
+  if (s && !setup) log('setup inválido:', `exe=${fs.existsSync(s.cemuExe)}`, `gameDir=${fs.existsSync(s.gameDir)}`,
+    `meta=${fs.existsSync(path.join(s.gameDir || '', 'meta', 'meta.xml'))}`, `jogo=${!!cemu.asGame(s.gameDir)}`, JSON.stringify(s));
+  if (!s) log('setup.json não encontrado em', dataFile('setup.json'));
   return s;
 }
 // Logo depois de ligar o PC o disco do jogo pode demorar a responder: espera até 15 s
@@ -90,7 +97,8 @@ function artUrls() {
 
 async function gameInfo() {
   await waitForSetup();
-  if (!setup) return { needsSetup: true, running: cemuRunning };
+  // caminhos salvos que (ainda) não respondem: a tela tenta de novo sozinha, sem pedir para escolher
+  if (!setup) return { needsSetup: true, saved: readJson('setup.json'), running: cemuRunning };
   const inst = install(), g = game(), meta = cemu.readMetaXml(g.dir);
   const art = artUrls();
   if (win && !win.isDestroyed() && fs.existsSync(art.iconPath)) win.setIcon(nativeImage.createFromPath(art.iconPath));
@@ -189,6 +197,7 @@ function createWindow() {
 
 /* ================= IPC ================= */
 ipcMain.handle('game:info', () => gameInfo());
+ipcMain.handle('setup:retry', () => { loadSetup(); return gameInfo(); });
 ipcMain.on('prefs:get', (e) => { e.returnValue = prefs; });
 ipcMain.on('cemu:running', (e) => { e.returnValue = cemuRunning; });
 ipcMain.handle('prefs:set', (_e, patch) => {

@@ -496,8 +496,23 @@ const setupUI = (() => {
   });
   $('#setup-cancel').addEventListener('click', () => { el.classList.remove('show'); done(false); });
 
+  // configuração já salva, mas o disco ainda não respondeu: continua tentando sozinho
+  let retryT = null;
+  function waitSaved(saved) {
+    mark('cemu', 'working', `Procurando o seu Cemu em <b>${esc(short(saved.cemuExe || ''))}</b>… (o disco pode estar acordando)`);
+    mark('game', 'waiting', 'Se mudou o Cemu de lugar, clique em <b>Escolher</b> acima.');
+    const tick = async () => {
+      if (!el.classList.contains('show') || cemuExe) return;
+      const d = await hyrule.retrySetup();
+      if (!d.needsSetup) { el.classList.remove('show'); done(d); return; }
+      retryT = setTimeout(tick, 2000);
+    };
+    retryT = setTimeout(tick, 1500);
+  }
+
   return {
-    open(canCancel) {
+    open(canCancel, saved) {
+      clearTimeout(retryT);
       cemuExe = null; game = null;
       mark('cemu', 'active', 'Escolha o arquivo <b>Cemu.exe</b> (versão 1.x ou 2.x).');
       mark('game', 'waiting', 'Procuro sozinho nas pastas do Cemu.');
@@ -507,6 +522,7 @@ const setupUI = (() => {
       $('#setup-cancel').hidden = !canCancel;
       refresh();
       el.classList.add('show');
+      if (saved && saved.cemuExe) waitSaved(saved);
       return new Promise((r) => (done = r));
     },
   };
@@ -532,8 +548,8 @@ async function reconfigure() {
   ]);
   if (data.needsSetup) {
     splash.classList.add('out');
-    await setupUI.open(false);
-    data = await hyrule.info();
+    const r = await setupUI.open(false, data.saved);
+    data = r && r.art ? r : await hyrule.info(); // r = info pronta quando o disco voltou sozinho
   }
   await applyArt(data.art);
   render(data);

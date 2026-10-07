@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('hyrule', {
   pickCemu: () => ipcRenderer.invoke('setup:pickCemu'),
   pickGame: () => ipcRenderer.invoke('setup:pickGame'),
   finishSetup: (paths) => ipcRenderer.invoke('setup:finish', paths),
+  retrySetup: () => ipcRenderer.invoke('setup:retry'),
   launch: () => ipcRenderer.invoke('game:launch'),
   focusCemu: () => ipcRenderer.invoke('cemu:focus'),
   openCemu: () => ipcRenderer.invoke('cemu:open'),
