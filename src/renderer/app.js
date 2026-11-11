@@ -6,6 +6,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const app = $('#app');
 const playBtn = $('#play');
 const playLabel = $('.play-label', playBtn);
+const vrBtn = $('#play-vr');
 let info = null;
 let winVisible = true;
 let state = hyrule.cemuRunningAtStart ? 'running' : 'idle'; // idle | loading | running
@@ -68,7 +69,9 @@ function render(next) {
     ['Distribuidora', info.publisher], ['Desenvolvedora', 'Nintendo EPD'], ['Lançamento', '3 de mar. de 2017'],
     ['Plataforma', 'Wii U'], ['Região', info.region], ['Código', info.productCode || '—'], ['Title ID', tid],
     ['Emulador', `Cemu ${info.cemuVersion}`],
+    ...(info.vr ? [['Realidade virtual', `BetterVR · Cemu ${info.vr.cemuVersion}`]] : []),
   ];
+  vrBtn.hidden = !info.vr;
   $('#details').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
 
   $('#pack-count').textContent = info.packs.length;
@@ -231,6 +234,7 @@ function setState(next) {
   playBtn.classList.toggle('loading', next === 'loading');
   playBtn.classList.toggle('running', next === 'running');
   playBtn.disabled = !info?.installed || next === 'loading';
+  vrBtn.disabled = !info?.installed || next !== 'idle';
   playLabel.textContent = next === 'loading' ? 'INICIANDO' : next === 'running' ? 'EM EXECUÇÃO' : 'JOGAR';
   playBtn.title = next === 'running' ? 'Ir para a janela do Cemu' : '';
   app.classList.toggle('running', next === 'running');
@@ -243,9 +247,11 @@ const launchEl = $('#launch');
 const launchText = $('#launch-text');
 let launchTimer, textTimer;
 
-function showLaunch() {
+function showLaunch(vr) {
   launchEl.classList.add('show');
-  const lines = ['Despertando o herói…', 'Acordando o Santuário da Ressurreição…', 'Carregando Hyrule…'];
+  const lines = vr
+    ? ['Coloque o headset…', 'Ligando a Pedra Sheikah…', 'Abrindo Hyrule em VR…']
+    : ['Despertando o herói…', 'Acordando o Santuário da Ressurreição…', 'Carregando Hyrule…'];
   let i = 0;
   launchText.textContent = lines[0];
   textTimer = setInterval(() => {
@@ -260,22 +266,24 @@ function hideLaunch() {
   launchEl.classList.remove('show');
 }
 
-playBtn.addEventListener('click', async () => {
-  if (state === 'running') return hyrule.focusCemu();
+async function startGame(vr) {
   if (state !== 'idle') return;
   setState('loading');
-  showLaunch();
+  showLaunch(vr);
   await wait(700); // deixa a transição respirar antes do Cemu roubar o foco
-  const r = await hyrule.launch();
+  const r = await (vr ? hyrule.launchVr() : hyrule.launch());
   if (!r.ok) {
     hideLaunch(); setState('idle'); toast(r.error || 'Não foi possível iniciar o Cemu');
     return;
   }
+  // no VR o BetterVR ainda confere o headset e pode perguntar se abre o SteamVR
   launchTimer = setTimeout(() => {
     hideLaunch();
-    if (state === 'loading') { setState('idle'); toast('O Cemu está demorando para abrir…'); }
-  }, 30000);
-});
+    if (state === 'loading') { setState('idle'); toast(vr ? 'O BetterVR não abriu o Cemu — veja se o headset está conectado' : 'O Cemu está demorando para abrir…'); }
+  }, vr ? 90000 : 30000);
+}
+playBtn.addEventListener('click', () => (state === 'running' ? hyrule.focusCemu() : startGame(false)));
+vrBtn.addEventListener('click', () => startGame(true));
 
 hyrule.onCemuState(({ running }) => {
   if (running) {

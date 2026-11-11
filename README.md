@@ -57,6 +57,7 @@ Calamity Ganon de fundo e um botão **JOGAR** bem grande, igual à Steam.
 | 👁️ | **Abertura Sheikah** | O olho Sheikah se desenha em azul brilhante antes de a biblioteca aparecer. |
 | 🏞️ | **Capa viva** | A tapeçaria do jogo com câmera lenta, efeito parallax e espíritos dourados flutuando. |
 | ▶️ | **Botão JOGAR** | Abre o jogo com uma transição de cinema e minimiza o launcher sozinho. Ao fechar o jogo, ele volta. |
+| 🥽 | **Botão VR** | Se o mod [BetterVR](https://github.com/Crementif/BotW-BetterVR) estiver instalado, aparece um botão **VR** ao lado do JOGAR para abrir o jogo direto no headset. |
 | ⏱️ | **Tempo de jogo real** | Lido do próprio Cemu: `PlayStats.dat` no 2.x e `settings.xml` no 1.x. |
 | 📸 | **Suas capturas** | Galeria com as screenshots do Cemu, com visualizador em tela cheia (setas ← → e Esc). |
 | 🧩 | **Graphic packs** | Lista dos packs ativos para o BotW (FPS++, Extended Memory…), só para consulta. |
@@ -140,6 +141,7 @@ Clique em **JOGAR**. Para ter o launcher sempre à mão, clique com o botão dir
 | Onde | O que faz |
 |---|---|
 | ▶️ **JOGAR** | Abre o jogo no Cemu. Se o Cemu já estiver aberto, o botão fica azul (**EM EXECUÇÃO**) e leva você até ele. |
+| 🥽 **VR** | Abre o jogo em realidade virtual pelo `BetterVR_Launcher.exe`. Só aparece quando o BetterVR está instalado (veja as perguntas frequentes). |
 | 🎧 **Fone** (barra superior) | **Clique**: liga ou desliga a música. **Passe o mouse**: abre o volume. **Rodinha do mouse**: ajusta o volume. |
 | ☀️ / 🌙 **Sol / Lua** | Troca entre o tema escuro e o tema claro. |
 | ⋯ **Mais opções** | **Sempre abrir em tela cheia**, abrir o Cemu sem jogo, abrir as pastas do jogo, do Cemu e das capturas, ou **reconfigurar os caminhos**. |
@@ -217,6 +219,20 @@ configuração aparece sozinha.
 O Cemu 1.x normalmente lê controles de **Xbox (XInput)**. Se você usa DualSense ou DualShock pela Steam, adicione o
 `Hyrule Launcher.exe` na Steam (**Adicionar um jogo → Adicionar um jogo não-Steam**) e abra o launcher por lá. A
 Steam reconhece o Cemu aberto pelo launcher e traduz o controle normalmente.
+</details>
+
+<details>
+<summary><b>🥽 Como jogo em VR?</b></summary>
+<br>
+
+Instale o mod **[BetterVR](https://github.com/Crementif/BotW-BetterVR)** seguindo o guia dele. Ele pede **Cemu 2.6 ou
+mais novo**, o graphic pack **FPS++** ligado e um headset com runtime OpenXR (SteamVR, Virtual Desktop…). Depois,
+coloque o `BetterVR_Launcher.exe` ao lado do `Cemu.exe` e o botão **VR** aparece sozinho no launcher.
+
+Dá para manter dois Cemus lado a lado, por exemplo `cemu_1.22.6` para jogar na tela e `cemu_2.6` com o BetterVR: o
+launcher procura o `BetterVR_Launcher.exe` na pasta do Cemu configurado e nas pastas vizinhas. O **JOGAR** continua
+abrindo o Cemu configurado, e o **VR** abre o Cemu que está junto do BetterVR. Se os dois usarem a mesma `mlc01`, o
+save e o tempo de jogo são os mesmos nos dois.
 </details>
 
 <details>

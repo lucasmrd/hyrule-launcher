@@ -255,6 +255,22 @@ svg { stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round
 .play.running:hover { box-shadow: 0 10px 30px rgba(79,216,242,.42), inset 0 1px 0 rgba(255,255,255,.3); }
 .play.running .ic-play { display: none; }
 
+.play-group { display: flex; align-items: center; gap: 10px; }
+/* VR (BetterVR): botão secundário com brilho Sheikah */
+.play-vr {
+  display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 18px; border-radius: 6px;
+  font: 700 14px Inter; letter-spacing: .14em; color: #8fe6f7;
+  background: rgba(79,216,242,.08); border: 1px solid rgba(79,216,242,.42);
+  box-shadow: inset 0 0 18px rgba(79,216,242,.08);
+  transition: transform .2s var(--ease), box-shadow .3s var(--ease), background .3s, opacity .3s;
+}
+.play-vr svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.play-vr:hover:not(:disabled) { transform: translateY(-1px); background: rgba(79,216,242,.16); box-shadow: 0 8px 26px rgba(79,216,242,.28), inset 0 0 18px rgba(79,216,242,.14); }
+.play-vr:active:not(:disabled) { transform: translateY(1px) scale(.97); transition-duration: .08s; }
+.play-vr:disabled { opacity: .35; cursor: default; }
+[data-theme="light"] .play-vr { color: #137a93; background: rgba(23,128,158,.08); border-color: rgba(23,128,158,.45); }
+.play-vr[hidden] { display: none; }
+
 .stat { display: flex; flex-direction: column; gap: 3px; }
 .stat-k { font: 600 10.5px Inter; letter-spacing: .14em; color: var(--dim); }
 .stat-v { font-size: 14px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }

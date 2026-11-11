@@ -1,7 +1,7 @@
 {
   "name": "hyrule-launcher",
   "productName": "Hyrule Launcher",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Launcher no estilo Steam para jogar Zelda: Breath of the Wild no Cemu — 100% visual, não altera o emulador.",
   "main": "src/main.js",
   "private": true,

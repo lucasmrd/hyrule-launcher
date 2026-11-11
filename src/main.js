@@ -73,6 +73,22 @@ function waitForSetup() {
 const install = () => cemu.resolveInstall(setup.cemuExe);
 const game = () => cemu.asGame(setup.gameDir);
 const artDir = () => dataFile(path.join('art', game().titleId));
+// BetterVR (mod de VR): BetterVR_Launcher.exe ao lado de um Cemu.exe — na pasta do Cemu configurado
+// ou numa pasta vizinha (ex.: cemu_1.22.6 para jogar normal e cemu_2.6 com o BetterVR).
+function findVr() {
+  if (!setup) return null;
+  const base = path.dirname(setup.cemuExe), parent = path.dirname(base);
+  let dirs = [base];
+  try {
+    dirs = dirs.concat(fs.readdirSync(parent, { withFileTypes: true })
+      .filter((d) => d.isDirectory()).map((d) => path.join(parent, d.name)).filter((d) => d !== base));
+  } catch { /* só a pasta do Cemu */ }
+  for (const d of dirs) {
+    const launcher = path.join(d, 'BetterVR_Launcher.exe'), cemuExe = path.join(d, 'Cemu.exe');
+    if (fs.existsSync(launcher) && fs.existsSync(cemuExe)) return { launcher, cemuExe, dir: d };
+  }
+  return null;
+}
 async function versionOf(exe) {
   if (!versions.has(exe)) versions.set(exe, await cemu.readVersion(exe));
   return versions.get(exe);
@@ -105,6 +121,7 @@ async function gameInfo() {
   if (!setup) return { needsSetup: true, saved: readJson('setup.json'), running: cemuRunning };
   const inst = install(), g = game(), meta = cemu.readMetaXml(g.dir);
   const art = artUrls();
+  const vr = findVr();
   if (win && !win.isDestroyed() && fs.existsSync(art.iconPath)) win.setIcon(nativeImage.createFromPath(art.iconPath));
   return {
     needsSetup: false,
@@ -116,6 +133,7 @@ async function gameInfo() {
     ...cemu.readPlaytime(inst, g.titleId),
     packs: cemu.readPacks(inst, g.titleId),
     cemuVersion: await versionOf(setup.cemuExe),
+    vr: vr ? { cemuVersion: await versionOf(vr.cemuExe) } : null,
     screenshots: readScreenshots(inst),
     art,
     installed: fs.existsSync(setup.cemuExe) && fs.existsSync(g.rpx),
@@ -264,6 +282,19 @@ ipcMain.handle('game:launch', async () => {
   const args = ['-g', game().rpx, ...(prefs.fullscreen ? ['-f'] : [])];
   const child = spawn(setup.cemuExe, args, { cwd: path.dirname(setup.cemuExe), detached: true, stdio: 'ignore' });
   child.on('error', () => { launchedByUs = false; send('cemu:error', 'Falha ao iniciar o Cemu'); });
+  child.unref();
+  return { ok: true };
+});
+
+// VR: quem abre o Cemu é o BetterVR_Launcher.exe (instala a camada Vulkan, abre o SteamVR se preciso,
+// espera o Cemu fechar e desfaz tudo). Repassa o mesmo "-g <jogo>"; tela cheia não importa no headset.
+ipcMain.handle('game:launchVr', async () => {
+  if (cemuRunning) return { ok: true, already: true };
+  const vr = findVr();
+  if (!setup || !vr) return { ok: false, error: 'BetterVR_Launcher.exe não encontrado' };
+  launchedByUs = true;
+  const child = spawn(vr.launcher, ['-g', game().rpx], { cwd: vr.dir, detached: true, stdio: 'ignore' });
+  child.on('error', (err) => { launchedByUs = false; log('BetterVR:', err.message); send('cemu:error', 'Falha ao iniciar o BetterVR'); });
   child.unref();
   return { ok: true };
 });
